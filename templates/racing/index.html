@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block title %}Главная - Клуб любителей скачек{% endblock %}
+
+{% block content %}
+<div class="hero-section text-center mb-5">
+    <div class="container">
+        <h1 class="display-4 mb-4">
+            <i class="fas fa-horse"></i> Добро пожаловать в клуб любителей скачек!
+        </h1>
+        <p class="lead">Управляйте лошадьми, жокеями и состязаниями в одном месте</p>
+    </div>
+</div>
+
+<div class="row mb-5">
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-horse fa-3x text-primary mb-3"></i>
+                <h5 class="card-title">Лошади</h5>
+                <h2 class="text-primary">{{ total_horses }}</h2>
+                <a href="{% url 'horse_list' %}" class="btn btn-outline-primary">Просмотреть</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-user fa-3x text-success mb-3"></i>
+                <h5 class="card-title">Жокеи</h5>
+                <h2 class="text-success">{{ total_jockeys }}</h2>
+                <a href="{% url 'jockey_list' %}" class="btn btn-outline-success">Просмотреть</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-trophy fa-3x text-warning mb-3"></i>
+                <h5 class="card-title">Состязания</h5>
+                <h2 class="text-warning">{{ total_competitions }}</h2>
+                <a href="{% url 'competition_list' %}" class="btn btn-outline-warning">Просмотреть</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center">
+            <div class="card-body">
+                <i class="fas fa-plus fa-3x text-info mb-3"></i>
+                <h5 class="card-title">Быстрые действия</h5>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'add_competition' %}" class="btn btn-sm btn-primary">Добавить состязание</a>
+                    <a href="{% url 'add_result' %}" class="btn btn-sm btn-info">Добавить результат</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-calendar-alt"></i> Последние состязания</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_competitions %}
+                    <div class="list-group">
+                        {% for competition in recent_competitions %}
+                            <a href="{% url 'competition_detail' competition.id %}" class="list-group-item list-group-item-action">
+                                <div class="d-flex w-100 justify-content-between">
+                                    <h6 class="mb-1">
+                                        {% if competition.name %}{{ competition.name }}{% else %}Состязание{% endif %}
+                                    </h6>
+                                    <small>{{ competition.date }} {{ competition.time }}</small>
+                                </div>
+                                <p class="mb-1">{{ competition.location }}</p>
+                            </a>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p class="text-muted">Пока нет состязаний</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-tools"></i> Управление</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'add_horse' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-plus"></i> Добавить лошадь
+                    </a>
+                    <a href="{% url 'add_jockey' %}" class="btn btn-outline-success">
+                        <i class="fas fa-plus"></i> Добавить жокея
+                    </a>
+                    <a href="{% url 'add_competition' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-plus"></i> Добавить состязание
+                    </a>
+                    <a href="{% url 'add_result' %}" class="btn btn-outline-info">
+                        <i class="fas fa-plus"></i> Добавить результат
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

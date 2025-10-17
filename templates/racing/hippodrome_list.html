@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Ипподромы - Клуб любителей скачек{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-building"></i> Ипподромы</h2>
+    <a href="{% url 'add_hippodrome' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить ипподром
+    </a>
+</div>
+
+{% if hippodromes %}
+    <div class="row">
+        {% for hippodrome in hippodromes %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-building"></i> {{ hippodrome.name }}
+                        </h5>
+                        <p class="card-text">
+                            <strong>Адрес:</strong> {{ hippodrome.address }}<br>
+                            {% if hippodrome.capacity %}
+                                <strong>Вместимость:</strong> {{ hippodrome.capacity }} мест<br>
+                            {% endif %}
+                            <strong>Статус:</strong> 
+                            {% if hippodrome.is_active %}
+                                <span class="badge bg-success">Активен</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Неактивен</span>
+                            {% endif %}
+                            {% if hippodrome.description %}
+                                <br><strong>Описание:</strong> {{ hippodrome.description|truncatewords:15 }}
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% if user.is_authenticated and user_profile.is_admin %}
+                    <div class="card-footer">
+                        <a href="{% url 'edit_hippodrome' hippodrome.id %}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-edit"></i> Редактировать
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-building fa-5x text-muted mb-3"></i>
+        <h4 class="text-muted">Пока нет ипподромов</h4>
+        <p class="text-muted">Добавьте первый ипподром, чтобы начать работу</p>
+        <a href="{% url 'add_hippodrome' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Добавить ипподром
+        </a>
+    </div>
+{% endif %}
+{% endblock %}

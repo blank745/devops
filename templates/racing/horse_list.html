@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Лошади - Клуб любителей скачек{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2><i class="fas fa-horse"></i> Лошади</h2>
+    <a href="{% url 'add_horse' %}" class="btn btn-primary">
+        <i class="fas fa-plus"></i> Добавить лошадь
+    </a>
+</div>
+
+{% if horses %}
+    <div class="row">
+        {% for horse in horses %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            <i class="fas fa-horse"></i> {{ horse.name }}
+                        </h5>
+                        <p class="card-text">
+                            <strong>Пол:</strong> 
+                            {% if horse.gender == 'M' %}
+                                <span class="badge bg-primary">Жеребец</span>
+                            {% else %}
+                                <span class="badge bg-danger">Кобыла</span>
+                            {% endif %}<br>
+                            <strong>Возраст:</strong> {{ horse.age }} лет<br>
+                            <strong>Владелец:</strong> {{ horse.owner.name }}
+                        </p>
+                    </div>
+                    <div class="card-footer">
+                        <a href="{% url 'horse_competitions' horse.id %}" class="btn btn-primary btn-sm">
+                            <i class="fas fa-trophy"></i> Состязания
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-horse fa-5x text-muted mb-3"></i>
+        <h4 class="text-muted">Пока нет лошадей</h4>
+        <p class="text-muted">Добавьте первую лошадь, чтобы начать работу</p>
+        <a href="{% url 'add_horse' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Добавить лошадь
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
