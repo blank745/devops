@@ -1,0 +1,5 @@
+exclude_dirs: [".venv"]
+
+format: json
+
+severity: high
