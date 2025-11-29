@@ -1,76 +1,67 @@
 """
 Unit тесты для декораторов приложения racing
 """
-import pytest
+import unittest
 from django.contrib.auth.models import User
-from django.test import RequestFactory
-from racing.decorators import admin_required, jockey_or_admin_required, user_required
+from django.test import TestCase, Client
 from racing.models import UserProfile, Jockey
-from racing.views import index
 
 
-@pytest.mark.unit
-class TestDecorators:
+class TestDecorators(TestCase):
     """Тесты для декораторов доступа"""
     
-    def test_admin_required_with_admin(self, db, client):
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.client = Client()
+    
+    def test_admin_required_with_admin(self):
         """Тест декоратора admin_required с администратором"""
         user = User.objects.create_user(username='admin', password='test123')
         UserProfile.objects.create(user=user, role='admin')
-        client.force_login(user)
+        self.client.force_login(user)
         
-        # Пытаемся получить доступ к защищенной функции
-        # В реальном приложении это будет проверяться через views
-        assert user.userprofile.role == 'admin'
-        assert user.userprofile.is_admin() is True
+        # Проверяем, что пользователь имеет роль администратора
+        self.assertEqual(user.userprofile.role, 'admin')
+        self.assertTrue(user.userprofile.is_admin())
     
-    def test_admin_required_with_user(self, db, client):
+    def test_admin_required_with_user(self):
         """Тест декоратора admin_required с обычным пользователем"""
         user = User.objects.create_user(username='user', password='test123')
         UserProfile.objects.create(user=user, role='user')
-        client.force_login(user)
+        self.client.force_login(user)
         
-        assert user.userprofile.role == 'user'
-        assert user.userprofile.is_admin() is False
+        self.assertEqual(user.userprofile.role, 'user')
+        self.assertFalse(user.userprofile.is_admin())
     
-    def test_jockey_or_admin_required_with_jockey(self, db, client):
+    def test_jockey_or_admin_required_with_jockey(self):
         """Тест декоратора jockey_or_admin_required с жокеем"""
         user = User.objects.create_user(username='jockey', password='test123')
-        jockey = Jockey.objects.create(name='Test Jockey', address='Test', age=30, rating=5)
+        jockey = Jockey.objects.create(
+            name='Test Jockey',
+            address='Test',
+            age=30,
+            rating=5
+        )
         UserProfile.objects.create(user=user, role='jockey', jockey=jockey)
-        client.force_login(user)
+        self.client.force_login(user)
         
-        assert user.userprofile.role == 'jockey'
-        assert user.userprofile.is_jockey() is True
+        self.assertEqual(user.userprofile.role, 'jockey')
+        self.assertTrue(user.userprofile.is_jockey())
     
-    def test_jockey_or_admin_required_with_admin(self, db, client):
+    def test_jockey_or_admin_required_with_admin(self):
         """Тест декоратора jockey_or_admin_required с администратором"""
         user = User.objects.create_user(username='admin', password='test123')
         UserProfile.objects.create(user=user, role='admin')
-        client.force_login(user)
+        self.client.force_login(user)
         
-        assert user.userprofile.role == 'admin'
-        assert user.userprofile.is_admin() is True
+        self.assertEqual(user.userprofile.role, 'admin')
+        self.assertTrue(user.userprofile.is_admin())
     
-    def test_user_required_with_user(self, db, client):
+    def test_user_required_with_user(self):
         """Тест декоратора user_required с пользователем"""
         user = User.objects.create_user(username='user', password='test123')
         UserProfile.objects.create(user=user, role='user')
-        client.force_login(user)
+        self.client.force_login(user)
         
-        assert user.userprofile.role == 'user'
-        assert user.userprofile.is_user() is True
-    
-    def test_user_required_creates_profile(self, db):
-        """Тест создания профиля при использовании user_required"""
-        user = User.objects.create_user(username='user', password='test123')
-        # Профиль не создан
-        
-        # Симулируем доступ через декоратор
-        factory = RequestFactory()
-        request = factory.get('/')
-        request.user = user
-        
-        # Декоратор должен создать профиль
-        # Это проверяется в integration тестах
-
+        self.assertEqual(user.userprofile.role, 'user')
+        self.assertTrue(user.userprofile.is_user())

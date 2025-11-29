@@ -1,140 +1,159 @@
 """
 Unit тесты для моделей приложения racing
 """
-import pytest
+import unittest
 from datetime import date, time, timedelta
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError
+from django.test import TestCase
+from django.contrib.auth.models import User
 from racing.models import (
     UserProfile, Hippodrome, Owner, Jockey, Horse, Competition, Result
 )
 
 
-@pytest.mark.unit
-class TestUserProfile:
+class TestUserProfile(TestCase):
     """Тесты для модели UserProfile"""
     
-    def test_user_profile_str(self, db):
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.user = User.objects.create_user(
+            username='testuser',
+            password='test123',
+            first_name='Иван',
+            last_name='Иванов'
+        )
+    
+    def test_user_profile_str(self):
         """Тест строкового представления профиля пользователя"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='testuser', password='test123')
-        profile = UserProfile.objects.create(user=user, role='user')
-        assert str(profile) == "testuser (Пользователь)"
+        profile = UserProfile.objects.create(user=self.user, role='user')
+        self.assertEqual(str(profile), "testuser (Пользователь)")
     
-    def test_user_profile_is_admin(self, db):
+    def test_user_profile_is_admin(self):
         """Тест метода is_admin()"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='admin', password='test123')
-        profile = UserProfile.objects.create(user=user, role='admin')
-        assert profile.is_admin() is True
-        assert profile.is_jockey() is False
-        assert profile.is_user() is False
+        profile = UserProfile.objects.create(user=self.user, role='admin')
+        self.assertTrue(profile.is_admin())
+        self.assertFalse(profile.is_jockey())
+        self.assertFalse(profile.is_user())
     
-    def test_user_profile_is_jockey(self, db):
+    def test_user_profile_is_jockey(self):
         """Тест метода is_jockey()"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='jockey', password='test123')
-        jockey = Jockey.objects.create(name='Test Jockey', address='Test', age=30, rating=5)
-        profile = UserProfile.objects.create(user=user, role='jockey', jockey=jockey)
-        assert profile.is_jockey() is True
-        assert profile.is_admin() is False
-        assert profile.is_user() is False
+        jockey = Jockey.objects.create(
+            name='Test Jockey',
+            address='Test',
+            age=30,
+            rating=5
+        )
+        profile = UserProfile.objects.create(
+            user=self.user,
+            role='jockey',
+            jockey=jockey
+        )
+        self.assertTrue(profile.is_jockey())
+        self.assertFalse(profile.is_admin())
+        self.assertFalse(profile.is_user())
     
-    def test_user_profile_is_user(self, db):
+    def test_user_profile_is_user(self):
         """Тест метода is_user()"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='user', password='test123')
-        profile = UserProfile.objects.create(user=user, role='user')
-        assert profile.is_user() is True
-        assert profile.is_admin() is False
-        assert profile.is_jockey() is False
+        profile = UserProfile.objects.create(user=self.user, role='user')
+        self.assertTrue(profile.is_user())
+        self.assertFalse(profile.is_admin())
+        self.assertFalse(profile.is_jockey())
     
-    def test_get_jockey_name(self, db):
+    def test_get_jockey_name(self):
         """Тест метода get_jockey_name() для жокея"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(
-            username='jockey', password='test123',
-            first_name='Иван', last_name='Иванов'
+        jockey = Jockey.objects.create(
+            name='Иван Иванов',
+            address='Test',
+            age=30,
+            rating=5
         )
-        jockey = Jockey.objects.create(name='Иван Иванов', address='Test', age=30, rating=5)
-        profile = UserProfile.objects.create(user=user, role='jockey', jockey=jockey)
-        assert profile.get_jockey_name() == 'Иван Иванов'
+        profile = UserProfile.objects.create(
+            user=self.user,
+            role='jockey',
+            jockey=jockey
+        )
+        self.assertEqual(profile.get_jockey_name(), 'Иван Иванов')
     
-    def test_get_jockey_name_for_non_jockey(self, db):
+    def test_get_jockey_name_for_non_jockey(self):
         """Тест метода get_jockey_name() для не-жокея"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(
-            username='user', password='test123',
-            first_name='Петр', last_name='Петров'
-        )
-        profile = UserProfile.objects.create(user=user, role='user')
-        assert profile.get_jockey_name() == 'Петр Петров'
+        profile = UserProfile.objects.create(user=self.user, role='user')
+        self.assertEqual(profile.get_jockey_name(), 'Иван Иванов')
     
-    def test_get_jockey_rating(self, db):
+    def test_get_jockey_rating(self):
         """Тест метода get_jockey_rating()"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='jockey', password='test123')
-        jockey = Jockey.objects.create(name='Test', address='Test', age=30, rating=8)
-        profile = UserProfile.objects.create(user=user, role='jockey', jockey=jockey)
-        assert profile.get_jockey_rating() == 8
+        jockey = Jockey.objects.create(
+            name='Test',
+            address='Test',
+            age=30,
+            rating=8
+        )
+        profile = UserProfile.objects.create(
+            user=self.user,
+            role='jockey',
+            jockey=jockey
+        )
+        self.assertEqual(profile.get_jockey_rating(), 8)
     
-    def test_get_jockey_rating_for_non_jockey(self, db):
+    def test_get_jockey_rating_for_non_jockey(self):
         """Тест метода get_jockey_rating() для не-жокея"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='user', password='test123')
-        profile = UserProfile.objects.create(user=user, role='user')
-        assert profile.get_jockey_rating() is None
+        profile = UserProfile.objects.create(user=self.user, role='user')
+        self.assertIsNone(profile.get_jockey_rating())
     
-    def test_get_jockey_age(self, db):
+    def test_get_jockey_age(self):
         """Тест метода get_jockey_age()"""
-        from django.contrib.auth.models import User
-        user = User.objects.create_user(username='jockey', password='test123')
-        jockey = Jockey.objects.create(name='Test', address='Test', age=35, rating=5)
-        profile = UserProfile.objects.create(user=user, role='jockey', jockey=jockey)
-        assert profile.get_jockey_age() == 35
+        jockey = Jockey.objects.create(
+            name='Test',
+            address='Test',
+            age=35,
+            rating=5
+        )
+        profile = UserProfile.objects.create(
+            user=self.user,
+            role='jockey',
+            jockey=jockey
+        )
+        self.assertEqual(profile.get_jockey_age(), 35)
 
 
-@pytest.mark.unit
-class TestHippodrome:
+class TestHippodrome(TestCase):
     """Тесты для модели Hippodrome"""
     
-    def test_hippodrome_str(self, db):
+    def test_hippodrome_str(self):
         """Тест строкового представления ипподрома"""
         hippodrome = Hippodrome.objects.create(
             name='Центральный ипподром',
             address='Москва',
             capacity=10000
         )
-        assert str(hippodrome) == 'Центральный ипподром'
+        self.assertEqual(str(hippodrome), 'Центральный ипподром')
     
-    def test_hippodrome_ordering(self, db):
+    def test_hippodrome_ordering(self):
         """Тест упорядочивания ипподромов"""
         Hippodrome.objects.create(name='Б', address='Test')
         Hippodrome.objects.create(name='А', address='Test')
         hippodromes = list(Hippodrome.objects.all())
-        assert hippodromes[0].name == 'А'
-        assert hippodromes[1].name == 'Б'
+        self.assertEqual(hippodromes[0].name, 'А')
+        self.assertEqual(hippodromes[1].name, 'Б')
 
 
-@pytest.mark.unit
-class TestOwner:
+class TestOwner(TestCase):
     """Тесты для модели Owner"""
     
-    def test_owner_str(self, db):
+    def test_owner_str(self):
         """Тест строкового представления владельца"""
         owner = Owner.objects.create(
             name='Иван Петров',
             address='Москва',
             phone='+79991234567'
         )
-        assert str(owner) == 'Иван Петров'
+        self.assertEqual(str(owner), 'Иван Петров')
 
 
-@pytest.mark.unit
-class TestJockey:
+class TestJockey(TestCase):
     """Тесты для модели Jockey"""
     
-    def test_jockey_str(self, db):
+    def test_jockey_str(self):
         """Тест строкового представления жокея"""
         jockey = Jockey.objects.create(
             name='Алексей Смирнов',
@@ -142,21 +161,21 @@ class TestJockey:
             age=30,
             rating=5
         )
-        assert str(jockey) == 'Алексей Смирнов'
+        self.assertEqual(str(jockey), 'Алексей Смирнов')
     
-    def test_jockey_rating_validation_min(self, db):
+    def test_jockey_rating_validation_min(self):
         """Тест валидации минимального рейтинга"""
         jockey = Jockey(name='Test', address='Test', age=30, rating=0)
-        with pytest.raises(ValidationError):
+        with self.assertRaises(ValidationError):
             jockey.full_clean()
     
-    def test_jockey_rating_validation_max(self, db):
+    def test_jockey_rating_validation_max(self):
         """Тест валидации максимального рейтинга"""
         jockey = Jockey(name='Test', address='Test', age=30, rating=11)
-        with pytest.raises(ValidationError):
+        with self.assertRaises(ValidationError):
             jockey.full_clean()
     
-    def test_jockey_rating_valid(self, db):
+    def test_jockey_rating_valid(self):
         """Тест валидного рейтинга"""
         jockey = Jockey.objects.create(
             name='Test',
@@ -167,195 +186,203 @@ class TestJockey:
         jockey.full_clean()  # Не должно вызывать исключение
 
 
-@pytest.mark.unit
-class TestHorse:
+class TestHorse(TestCase):
     """Тесты для модели Horse"""
     
-    def test_horse_str(self, db):
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.owner = Owner.objects.create(
+            name='Owner',
+            address='Test',
+            phone='+79991234567'
+        )
+    
+    def test_horse_str(self):
         """Тест строкового представления лошади"""
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
         horse = Horse.objects.create(
             name='Быстрый',
             gender='M',
             age=5,
-            owner=owner
+            owner=self.owner
         )
-        assert str(horse) == 'Быстрый'
+        self.assertEqual(str(horse), 'Быстрый')
     
-    def test_horse_gender_choices(self, db):
+    def test_horse_gender_choices(self):
         """Тест выбора пола лошади"""
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse_m = Horse.objects.create(name='M', gender='M', age=5, owner=owner)
-        horse_f = Horse.objects.create(name='F', gender='F', age=5, owner=owner)
-        assert horse_m.gender == 'M'
-        assert horse_f.gender == 'F'
+        horse_m = Horse.objects.create(
+            name='M',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        horse_f = Horse.objects.create(
+            name='F',
+            gender='F',
+            age=5,
+            owner=self.owner
+        )
+        self.assertEqual(horse_m.gender, 'M')
+        self.assertEqual(horse_f.gender, 'F')
 
 
-@pytest.mark.unit
-class TestCompetition:
+class TestCompetition(TestCase):
     """Тесты для модели Competition"""
     
-    def test_competition_str_with_name(self, db):
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.hippodrome = Hippodrome.objects.create(
+            name='Центральный',
+            address='Test'
+        )
+    
+    def test_competition_str_with_name(self):
         """Тест строкового представления состязания с названием"""
-        hippodrome = Hippodrome.objects.create(name='Центральный', address='Test')
         competition = Competition.objects.create(
             name='Кубок чемпионов',
-            hippodrome=hippodrome,
+            hippodrome=self.hippodrome,
             date=date(2024, 1, 15),
             time=time(14, 0)
         )
-        assert 'Кубок чемпионов' in str(competition)
-        assert 'Центральный' in str(competition)
+        self.assertIn('Кубок чемпионов', str(competition))
+        self.assertIn('Центральный', str(competition))
     
-    def test_competition_str_without_name(self, db):
+    def test_competition_str_without_name(self):
         """Тест строкового представления состязания без названия"""
-        hippodrome = Hippodrome.objects.create(name='Центральный', address='Test')
         competition = Competition.objects.create(
             name=None,
-            hippodrome=hippodrome,
+            hippodrome=self.hippodrome,
             date=date(2024, 1, 15),
             time=time(14, 0)
         )
-        assert 'Состязание' in str(competition)
-        assert 'Центральный' in str(competition)
+        self.assertIn('Состязание', str(competition))
+        self.assertIn('Центральный', str(competition))
     
-    def test_competition_ordering(self, db):
+    def test_competition_ordering(self):
         """Тест упорядочивания состязаний"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
         comp1 = Competition.objects.create(
-            hippodrome=hippodrome,
+            hippodrome=self.hippodrome,
             date=date(2024, 1, 15),
             time=time(14, 0)
         )
         comp2 = Competition.objects.create(
-            hippodrome=hippodrome,
+            hippodrome=self.hippodrome,
             date=date(2024, 1, 16),
             time=time(15, 0)
         )
         competitions = list(Competition.objects.all())
         # Более поздние даты должны быть первыми
-        assert competitions[0].date >= competitions[1].date
+        self.assertGreaterEqual(competitions[0].date, competitions[1].date)
 
 
-@pytest.mark.unit
-class TestResult:
+class TestResult(TestCase):
     """Тесты для модели Result"""
     
-    def test_result_str(self, db):
-        """Тест строкового представления результата"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.hippodrome = Hippodrome.objects.create(name='Test', address='Test')
+        self.competition = Competition.objects.create(
             name='Кубок',
-            hippodrome=hippodrome,
+            hippodrome=self.hippodrome,
             date=date(2024, 1, 15),
             time=time(14, 0)
         )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse = Horse.objects.create(name='Быстрый', gender='M', age=5, owner=owner)
-        jockey = Jockey.objects.create(name='Jockey', address='Test', age=30, rating=5)
+        self.owner = Owner.objects.create(
+            name='Owner',
+            address='Test',
+            phone='+79991234567'
+        )
+        self.horse = Horse.objects.create(
+            name='Быстрый',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        self.jockey = Jockey.objects.create(
+            name='Jockey',
+            address='Test',
+            age=30,
+            rating=5
+        )
+    
+    def test_result_str(self):
+        """Тест строкового представления результата"""
         result = Result.objects.create(
-            competition=competition,
-            horse=horse,
-            jockey=jockey,
+            competition=self.competition,
+            horse=self.horse,
+            jockey=self.jockey,
             position=1,
             time_result=timedelta(minutes=2, seconds=30, milliseconds=500)
         )
-        assert 'Кубок' in str(result)
-        assert 'Быстрый' in str(result)
-        assert '1 место' in str(result)
+        self.assertIn('Кубок', str(result))
+        self.assertIn('Быстрый', str(result))
+        self.assertIn('1 место', str(result))
     
-    def test_result_unique_together(self, db):
+    def test_result_unique_together(self):
         """Тест уникальности комбинации competition и position"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date(2024, 1, 15),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse1 = Horse.objects.create(name='Horse1', gender='M', age=5, owner=owner)
-        horse2 = Horse.objects.create(name='Horse2', gender='M', age=5, owner=owner)
-        jockey1 = Jockey.objects.create(name='Jockey1', address='Test', age=30, rating=5)
-        jockey2 = Jockey.objects.create(name='Jockey2', address='Test', age=30, rating=5)
-        
         Result.objects.create(
-            competition=competition,
-            horse=horse1,
-            jockey=jockey1,
+            competition=self.competition,
+            horse=self.horse,
+            jockey=self.jockey,
             position=1,
             time_result=timedelta(minutes=2, seconds=30)
         )
         
+        # Создаем вторую лошадь и жокея
+        horse2 = Horse.objects.create(
+            name='Horse2',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        jockey2 = Jockey.objects.create(
+            name='Jockey2',
+            address='Test',
+            age=30,
+            rating=5
+        )
+        
         # Попытка создать второй результат с тем же местом должна вызвать ошибку
-        with pytest.raises(IntegrityError):
+        with self.assertRaises(IntegrityError):
             Result.objects.create(
-                competition=competition,
+                competition=self.competition,
                 horse=horse2,
                 jockey=jockey2,
                 position=1,
                 time_result=timedelta(minutes=2, seconds=35)
             )
     
-    def test_get_formatted_time(self, db):
+    def test_get_formatted_time(self):
         """Тест форматирования времени результата"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date(2024, 1, 15),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse = Horse.objects.create(name='Horse', gender='M', age=5, owner=owner)
-        jockey = Jockey.objects.create(name='Jockey', address='Test', age=30, rating=5)
         result = Result.objects.create(
-            competition=competition,
-            horse=horse,
-            jockey=jockey,
+            competition=self.competition,
+            horse=self.horse,
+            jockey=self.jockey,
             position=1,
             time_result=timedelta(minutes=2, seconds=30, milliseconds=500)
         )
         formatted = result.get_formatted_time()
-        assert formatted == "02:30.500"
+        self.assertEqual(formatted, "02:30.500")
     
-    def test_get_formatted_time_zero(self, db):
+    def test_get_formatted_time_zero(self):
         """Тест форматирования нулевого времени"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date(2024, 1, 15),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse = Horse.objects.create(name='Horse', gender='M', age=5, owner=owner)
-        jockey = Jockey.objects.create(name='Jockey', address='Test', age=30, rating=5)
         result = Result.objects.create(
-            competition=competition,
-            horse=horse,
-            jockey=jockey,
+            competition=self.competition,
+            horse=self.horse,
+            jockey=self.jockey,
             position=1,
             time_result=timedelta(0)
         )
         formatted = result.get_formatted_time()
-        assert formatted == "00:00.000"
+        self.assertEqual(formatted, "00:00.000")
     
-    def test_get_formatted_time_with_seconds_only(self, db):
+    def test_get_formatted_time_with_seconds_only(self):
         """Тест форматирования времени только с секундами"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date(2024, 1, 15),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse = Horse.objects.create(name='Horse', gender='M', age=5, owner=owner)
-        jockey = Jockey.objects.create(name='Jockey', address='Test', age=30, rating=5)
         result = Result.objects.create(
-            competition=competition,
-            horse=horse,
-            jockey=jockey,
+            competition=self.competition,
+            horse=self.horse,
+            jockey=self.jockey,
             position=1,
             time_result=timedelta(seconds=45, milliseconds=250)
         )
         formatted = result.get_formatted_time()
-        assert formatted == "00:45.250"
-
+        self.assertEqual(formatted, "00:45.250")

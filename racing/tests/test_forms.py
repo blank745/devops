@@ -1,9 +1,10 @@
 """
 Unit тесты для форм приложения racing
 """
-import pytest
+import unittest
 from datetime import date, time, timedelta
 from django.contrib.auth.models import User
+from django.test import TestCase
 from django.utils import timezone
 from racing.forms import (
     HippodromeForm, OwnerForm, JockeyForm, HorseForm,
@@ -14,11 +15,10 @@ from racing.models import (
 )
 
 
-@pytest.mark.unit
-class TestHippodromeForm:
+class TestHippodromeForm(TestCase):
     """Тесты для формы HippodromeForm"""
     
-    def test_valid_hippodrome_form(self, db):
+    def test_valid_hippodrome_form(self):
         """Тест валидной формы ипподрома"""
         form_data = {
             'name': 'Центральный ипподром',
@@ -28,9 +28,9 @@ class TestHippodromeForm:
             'is_active': True
         }
         form = HippodromeForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_hippodrome_form_save(self, db):
+    def test_hippodrome_form_save(self):
         """Тест сохранения формы ипподрома"""
         form_data = {
             'name': 'Центральный ипподром',
@@ -39,17 +39,16 @@ class TestHippodromeForm:
             'is_active': True
         }
         form = HippodromeForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
         hippodrome = form.save()
-        assert hippodrome.name == 'Центральный ипподром'
-        assert Hippodrome.objects.filter(name='Центральный ипподром').exists()
+        self.assertEqual(hippodrome.name, 'Центральный ипподром')
+        self.assertTrue(Hippodrome.objects.filter(name='Центральный ипподром').exists())
 
 
-@pytest.mark.unit
-class TestOwnerForm:
+class TestOwnerForm(TestCase):
     """Тесты для формы OwnerForm"""
     
-    def test_valid_owner_form(self, db):
+    def test_valid_owner_form(self):
         """Тест валидной формы владельца"""
         form_data = {
             'name': 'Иван Петров',
@@ -57,9 +56,9 @@ class TestOwnerForm:
             'phone': '+79991234567'
         }
         form = OwnerForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_owner_form_phone_normalization(self, db):
+    def test_owner_form_phone_normalization(self):
         """Тест нормализации номера телефона"""
         form_data = {
             'name': 'Иван Петров',
@@ -67,10 +66,10 @@ class TestOwnerForm:
             'phone': '8 (999) 123-45-67'
         }
         form = OwnerForm(data=form_data)
-        assert form.is_valid()
-        assert form.cleaned_data['phone'] == '+79991234567'
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['phone'], '+79991234567')
     
-    def test_owner_form_invalid_phone(self, db):
+    def test_owner_form_invalid_phone(self):
         """Тест невалидного номера телефона"""
         form_data = {
             'name': 'Иван Петров',
@@ -78,10 +77,10 @@ class TestOwnerForm:
             'phone': '12345'
         }
         form = OwnerForm(data=form_data)
-        assert not form.is_valid()
-        assert 'phone' in form.errors
+        self.assertFalse(form.is_valid())
+        self.assertIn('phone', form.errors)
     
-    def test_owner_form_phone_with_8(self, db):
+    def test_owner_form_phone_with_8(self):
         """Тест номера телефона начинающегося с 8"""
         form_data = {
             'name': 'Иван Петров',
@@ -89,15 +88,14 @@ class TestOwnerForm:
             'phone': '89991234567'
         }
         form = OwnerForm(data=form_data)
-        assert form.is_valid()
-        assert form.cleaned_data['phone'].startswith('+7')
+        self.assertTrue(form.is_valid())
+        self.assertTrue(form.cleaned_data['phone'].startswith('+7'))
 
 
-@pytest.mark.unit
-class TestJockeyForm:
+class TestJockeyForm(TestCase):
     """Тесты для формы JockeyForm"""
     
-    def test_valid_jockey_form(self, db):
+    def test_valid_jockey_form(self):
         """Тест валидной формы жокея"""
         form_data = {
             'name': 'Алексей Смирнов',
@@ -106,9 +104,9 @@ class TestJockeyForm:
             'rating': 5
         }
         form = JockeyForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_jockey_form_save(self, db):
+    def test_jockey_form_save(self):
         """Тест сохранения формы жокея"""
         form_data = {
             'name': 'Алексей Смирнов',
@@ -117,166 +115,190 @@ class TestJockeyForm:
             'rating': 8
         }
         form = JockeyForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
         jockey = form.save()
-        assert jockey.name == 'Алексей Смирнов'
-        assert jockey.rating == 8
+        self.assertEqual(jockey.name, 'Алексей Смирнов')
+        self.assertEqual(jockey.rating, 8)
 
 
-@pytest.mark.unit
-class TestHorseForm:
+class TestHorseForm(TestCase):
     """Тесты для формы HorseForm"""
     
-    def test_valid_horse_form(self, db):
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.owner = Owner.objects.create(
+            name='Owner',
+            address='Test',
+            phone='+79991234567'
+        )
+    
+    def test_valid_horse_form(self):
         """Тест валидной формы лошади"""
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
         form_data = {
             'name': 'Быстрый',
             'gender': 'M',
             'age': 5,
-            'owner': owner.id
+            'owner': self.owner.id
         }
         form = HorseForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_horse_form_save(self, db):
+    def test_horse_form_save(self):
         """Тест сохранения формы лошади"""
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
         form_data = {
             'name': 'Быстрый',
             'gender': 'F',
             'age': 5,
-            'owner': owner.id
+            'owner': self.owner.id
         }
         form = HorseForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
         horse = form.save()
-        assert horse.name == 'Быстрый'
-        assert horse.gender == 'F'
+        self.assertEqual(horse.name, 'Быстрый')
+        self.assertEqual(horse.gender, 'F')
 
 
-@pytest.mark.unit
-class TestCompetitionForm:
+class TestCompetitionForm(TestCase):
     """Тесты для формы CompetitionForm"""
     
-    def test_valid_competition_form(self, db):
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.hippodrome = Hippodrome.objects.create(
+            name='Test',
+            address='Test'
+        )
+    
+    def test_valid_competition_form(self):
         """Тест валидной формы состязания"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
         past_date = date.today() - timedelta(days=1)
         form_data = {
             'date': past_date,
             'time': time(14, 0),
-            'hippodrome': hippodrome.id,
+            'hippodrome': self.hippodrome.id,
             'name': 'Кубок чемпионов'
         }
         form = CompetitionForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_competition_form_future_date(self, db):
+    def test_competition_form_future_date(self):
         """Тест формы состязания с датой в будущем"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
         future_date = date.today() + timedelta(days=1)
         form_data = {
             'date': future_date,
             'time': time(14, 0),
-            'hippodrome': hippodrome.id,
+            'hippodrome': self.hippodrome.id,
             'name': 'Кубок'
         }
         form = CompetitionForm(data=form_data)
-        assert not form.is_valid()
-        assert '__all__' in form.errors
+        self.assertFalse(form.is_valid())
+        self.assertIn('__all__', form.errors)
     
-    def test_competition_form_too_old_date(self, db):
+    def test_competition_form_too_old_date(self):
         """Тест формы состязания с датой более 10 лет назад"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
         old_date = date.today() - timedelta(days=3651)  # Более 10 лет
         form_data = {
             'date': old_date,
             'time': time(14, 0),
-            'hippodrome': hippodrome.id,
+            'hippodrome': self.hippodrome.id,
             'name': 'Кубок'
         }
         form = CompetitionForm(data=form_data)
-        assert not form.is_valid()
+        self.assertFalse(form.is_valid())
 
 
-@pytest.mark.unit
-class TestResultForm:
+class TestResultForm(TestCase):
     """Тесты для формы ResultForm"""
     
-    def test_valid_result_form(self, db):
-        """Тест валидной формы результата"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
+    def setUp(self):
+        """Настройка тестовых данных"""
+        self.hippodrome = Hippodrome.objects.create(name='Test', address='Test')
+        self.competition = Competition.objects.create(
+            hippodrome=self.hippodrome,
             date=date.today() - timedelta(days=1),
             time=time(14, 0)
         )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse = Horse.objects.create(name='Horse', gender='M', age=5, owner=owner)
-        jockey = Jockey.objects.create(name='Jockey', address='Test', age=30, rating=5)
-        
+        self.owner = Owner.objects.create(
+            name='Owner',
+            address='Test',
+            phone='+79991234567'
+        )
+        self.horse = Horse.objects.create(
+            name='Horse',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        self.jockey = Jockey.objects.create(
+            name='Jockey',
+            address='Test',
+            age=30,
+            rating=5
+        )
+    
+    def test_valid_result_form(self):
+        """Тест валидной формы результата"""
         form_data = {
-            'competition': competition.id,
-            'horse': horse.id,
-            'jockey': jockey.id,
+            'competition': self.competition.id,
+            'horse': self.horse.id,
+            'jockey': self.jockey.id,
             'position': 1,
             'time_result': '02:30.500'
         }
         form = ResultForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_result_form_duplicate_horse(self, db):
+    def test_result_form_duplicate_horse(self):
         """Тест формы результата с дублирующейся лошадью"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date.today() - timedelta(days=1),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse = Horse.objects.create(name='Horse', gender='M', age=5, owner=owner)
-        jockey1 = Jockey.objects.create(name='Jockey1', address='Test', age=30, rating=5)
-        jockey2 = Jockey.objects.create(name='Jockey2', address='Test', age=30, rating=5)
-        
         # Создаем первый результат
+        jockey1 = Jockey.objects.create(
+            name='Jockey1',
+            address='Test',
+            age=30,
+            rating=5
+        )
         Result.objects.create(
-            competition=competition,
-            horse=horse,
+            competition=self.competition,
+            horse=self.horse,
             jockey=jockey1,
             position=1,
             time_result=timedelta(minutes=2, seconds=30)
         )
         
         # Пытаемся создать второй результат с той же лошадью
+        jockey2 = Jockey.objects.create(
+            name='Jockey2',
+            address='Test',
+            age=30,
+            rating=5
+        )
         form_data = {
-            'competition': competition.id,
-            'horse': horse.id,
+            'competition': self.competition.id,
+            'horse': self.horse.id,
             'jockey': jockey2.id,
             'position': 2,
             'time_result': '02:35.000'
         }
         form = ResultForm(data=form_data)
-        assert not form.is_valid()
-        assert '__all__' in form.errors
+        self.assertFalse(form.is_valid())
+        self.assertIn('__all__', form.errors)
     
-    def test_result_form_duplicate_position(self, db):
+    def test_result_form_duplicate_position(self):
         """Тест формы результата с дублирующимся местом"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date.today() - timedelta(days=1),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse1 = Horse.objects.create(name='Horse1', gender='M', age=5, owner=owner)
-        horse2 = Horse.objects.create(name='Horse2', gender='M', age=5, owner=owner)
-        jockey1 = Jockey.objects.create(name='Jockey1', address='Test', age=30, rating=5)
-        jockey2 = Jockey.objects.create(name='Jockey2', address='Test', age=30, rating=5)
-        
         # Создаем первый результат
+        horse1 = Horse.objects.create(
+            name='Horse1',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        jockey1 = Jockey.objects.create(
+            name='Jockey1',
+            address='Test',
+            age=30,
+            rating=5
+        )
         Result.objects.create(
-            competition=competition,
+            competition=self.competition,
             horse=horse1,
             jockey=jockey1,
             position=1,
@@ -284,34 +306,46 @@ class TestResultForm:
         )
         
         # Пытаемся создать второй результат с тем же местом
+        horse2 = Horse.objects.create(
+            name='Horse2',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        jockey2 = Jockey.objects.create(
+            name='Jockey2',
+            address='Test',
+            age=30,
+            rating=5
+        )
         form_data = {
-            'competition': competition.id,
+            'competition': self.competition.id,
             'horse': horse2.id,
             'jockey': jockey2.id,
             'position': 1,
             'time_result': '02:35.000'
         }
         form = ResultForm(data=form_data)
-        assert not form.is_valid()
-        assert '__all__' in form.errors
+        self.assertFalse(form.is_valid())
+        self.assertIn('__all__', form.errors)
     
-    def test_result_form_time_validation(self, db):
+    def test_result_form_time_validation(self):
         """Тест валидации времени результата"""
-        hippodrome = Hippodrome.objects.create(name='Test', address='Test')
-        competition = Competition.objects.create(
-            hippodrome=hippodrome,
-            date=date.today() - timedelta(days=1),
-            time=time(14, 0)
-        )
-        owner = Owner.objects.create(name='Owner', address='Test', phone='+79991234567')
-        horse1 = Horse.objects.create(name='Horse1', gender='M', age=5, owner=owner)
-        horse2 = Horse.objects.create(name='Horse2', gender='M', age=5, owner=owner)
-        jockey1 = Jockey.objects.create(name='Jockey1', address='Test', age=30, rating=5)
-        jockey2 = Jockey.objects.create(name='Jockey2', address='Test', age=30, rating=5)
-        
         # Создаем первый результат с временем 02:30
+        horse1 = Horse.objects.create(
+            name='Horse1',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        jockey1 = Jockey.objects.create(
+            name='Jockey1',
+            address='Test',
+            age=30,
+            rating=5
+        )
         Result.objects.create(
-            competition=competition,
+            competition=self.competition,
             horse=horse1,
             jockey=jockey1,
             position=1,
@@ -319,23 +353,34 @@ class TestResultForm:
         )
         
         # Пытаемся создать результат на 2-е место с лучшим временем
+        horse2 = Horse.objects.create(
+            name='Horse2',
+            gender='M',
+            age=5,
+            owner=self.owner
+        )
+        jockey2 = Jockey.objects.create(
+            name='Jockey2',
+            address='Test',
+            age=30,
+            rating=5
+        )
         form_data = {
-            'competition': competition.id,
+            'competition': self.competition.id,
             'horse': horse2.id,
             'jockey': jockey2.id,
             'position': 2,
             'time_result': '02:25.000'  # Лучше чем у первого места
         }
         form = ResultForm(data=form_data)
-        assert not form.is_valid()
-        assert '__all__' in form.errors
+        self.assertFalse(form.is_valid())
+        self.assertIn('__all__', form.errors)
 
 
-@pytest.mark.unit
-class TestUserRegistrationForm:
+class TestUserRegistrationForm(TestCase):
     """Тесты для формы регистрации пользователя"""
     
-    def test_valid_registration_form(self, db):
+    def test_valid_registration_form(self):
         """Тест валидной формы регистрации"""
         form_data = {
             'username': 'newuser',
@@ -348,9 +393,9 @@ class TestUserRegistrationForm:
             'address': 'Москва'
         }
         form = UserRegistrationForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
     
-    def test_registration_form_save(self, db):
+    def test_registration_form_save(self):
         """Тест сохранения формы регистрации"""
         form_data = {
             'username': 'newuser',
@@ -363,14 +408,14 @@ class TestUserRegistrationForm:
             'address': 'Москва'
         }
         form = UserRegistrationForm(data=form_data)
-        assert form.is_valid()
+        self.assertTrue(form.is_valid())
         user = form.save()
-        assert user.username == 'newuser'
-        assert UserProfile.objects.filter(user=user, role='user').exists()
+        self.assertEqual(user.username, 'newuser')
+        self.assertTrue(UserProfile.objects.filter(user=user, role='user').exists())
         profile = UserProfile.objects.get(user=user)
-        assert profile.phone == '+79991234567'
+        self.assertEqual(profile.phone, '+79991234567')
     
-    def test_registration_form_phone_normalization(self, db):
+    def test_registration_form_phone_normalization(self):
         """Тест нормализации номера телефона при регистрации"""
         form_data = {
             'username': 'newuser',
@@ -383,10 +428,10 @@ class TestUserRegistrationForm:
             'address': 'Москва'
         }
         form = UserRegistrationForm(data=form_data)
-        assert form.is_valid()
-        assert form.cleaned_data['phone'] == '+79991234567'
+        self.assertTrue(form.is_valid())
+        self.assertEqual(form.cleaned_data['phone'], '+79991234567')
     
-    def test_registration_form_password_mismatch(self, db):
+    def test_registration_form_password_mismatch(self):
         """Тест несовпадения паролей"""
         form_data = {
             'username': 'newuser',
@@ -398,5 +443,4 @@ class TestUserRegistrationForm:
             'phone': '+79991234567'
         }
         form = UserRegistrationForm(data=form_data)
-        assert not form.is_valid()
-
+        self.assertFalse(form.is_valid())
