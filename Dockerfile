@@ -22,14 +22,11 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 # Set working directory
 WORKDIR /app
 
-# Copy requirements file first (for better Docker layer caching)
-COPY requirements.txt .
-
-# Install Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
-
 # Copy the entire application
 COPY . .
+
+# Install Python dependencies
+RUN pip3 install --no-cache-dir -r requirements.txt && python3 manage.py test racing.tests
 
 # Create necessary directories
 RUN mkdir -p /app/static /app/logs /app/media /app/data
