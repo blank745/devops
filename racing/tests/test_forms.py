@@ -1,11 +1,13 @@
 """
 Unit тесты для форм приложения racing
+Использует unittest
 """
 import unittest
 from datetime import date, time, timedelta
 from django.contrib.auth.models import User
 from django.test import TestCase
 from django.utils import timezone
+from django.core.management import call_command
 from racing.forms import (
     HippodromeForm, OwnerForm, JockeyForm, HorseForm,
     CompetitionForm, ResultForm, UserRegistrationForm
@@ -15,7 +17,21 @@ from racing.models import (
 )
 
 
-class TestHippodromeForm(TestCase):
+# Базовый класс с применением миграций
+try:
+    from racing.tests.test_base import BaseTestCase
+except ImportError:
+    # Если test_base.py не найден, используем встроенный класс
+    class BaseTestCase(TestCase):
+        """Базовый класс для тестов с применением миграций"""
+        @classmethod
+        def setUpClass(cls):
+            """Применяет миграции перед запуском тестов класса"""
+            super().setUpClass()
+            call_command('migrate', verbosity=0, interactive=False)
+
+
+class TestHippodromeForm(BaseTestCase):
     """Тесты для формы HippodromeForm"""
     
     def test_valid_hippodrome_form(self):
@@ -45,7 +61,7 @@ class TestHippodromeForm(TestCase):
         self.assertTrue(Hippodrome.objects.filter(name='Центральный ипподром').exists())
 
 
-class TestOwnerForm(TestCase):
+class TestOwnerForm(BaseTestCase):
     """Тесты для формы OwnerForm"""
     
     def test_valid_owner_form(self):
@@ -92,7 +108,7 @@ class TestOwnerForm(TestCase):
         self.assertTrue(form.cleaned_data['phone'].startswith('+7'))
 
 
-class TestJockeyForm(TestCase):
+class TestJockeyForm(BaseTestCase):
     """Тесты для формы JockeyForm"""
     
     def test_valid_jockey_form(self):
@@ -121,7 +137,7 @@ class TestJockeyForm(TestCase):
         self.assertEqual(jockey.rating, 8)
 
 
-class TestHorseForm(TestCase):
+class TestHorseForm(BaseTestCase):
     """Тесты для формы HorseForm"""
     
     def setUp(self):
@@ -158,7 +174,7 @@ class TestHorseForm(TestCase):
         self.assertEqual(horse.gender, 'F')
 
 
-class TestCompetitionForm(TestCase):
+class TestCompetitionForm(BaseTestCase):
     """Тесты для формы CompetitionForm"""
     
     def setUp(self):
@@ -206,7 +222,7 @@ class TestCompetitionForm(TestCase):
         self.assertFalse(form.is_valid())
 
 
-class TestResultForm(TestCase):
+class TestResultForm(BaseTestCase):
     """Тесты для формы ResultForm"""
     
     def setUp(self):
@@ -377,7 +393,7 @@ class TestResultForm(TestCase):
         self.assertIn('__all__', form.errors)
 
 
-class TestUserRegistrationForm(TestCase):
+class TestUserRegistrationForm(BaseTestCase):
     """Тесты для формы регистрации пользователя"""
     
     def test_valid_registration_form(self):

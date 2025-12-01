@@ -1,13 +1,29 @@
 """
 Unit тесты для декораторов приложения racing
+Использует unittest
 """
 import unittest
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
+from django.core.management import call_command
 from racing.models import UserProfile, Jockey
 
 
-class TestDecorators(TestCase):
+# Базовый класс с применением миграций
+try:
+    from racing.tests.test_base import BaseTestCase
+except ImportError:
+    # Если test_base.py не найден, используем встроенный класс
+    class BaseTestCase(TestCase):
+        """Базовый класс для тестов с применением миграций"""
+        @classmethod
+        def setUpClass(cls):
+            """Применяет миграции перед запуском тестов класса"""
+            super().setUpClass()
+            call_command('migrate', verbosity=0, interactive=False)
+
+
+class TestDecorators(BaseTestCase):
     """Тесты для декораторов доступа"""
     
     def setUp(self):

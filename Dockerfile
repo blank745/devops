@@ -26,7 +26,7 @@ WORKDIR /app
 COPY . .
 
 # Install Python dependencies
-RUN pip3 install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt && python3 manage.py test racing.tests
 
 # Create necessary directories
 RUN mkdir -p /app/static /app/logs /app/media /app/data

@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 import os
+import sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,16 +81,33 @@ WSGI_APPLICATION = 'racing_club.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'racing_club_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'racing_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'racing_password'),
-        'HOST': os.environ.get('POSTGRES_HOST', 'db'),
-        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+# Используем SQLite для тестов, PostgreSQL для production
+# Проверяем, запущены ли тесты (команда test или переменная окружения)
+RUNNING_TESTS = (
+    'test' in sys.argv or 
+    'pytest' in sys.argv[0] or
+    os.environ.get('USE_SQLITE_FOR_TESTS', 'False').lower() == 'true'
+)
+
+if RUNNING_TESTS:
+    # SQLite для тестов - быстрее и не требует отдельной БД
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+        }
     }
-}
+else:
+    # PostgreSQL для production
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('POSTGRES_DB', 'racing_club_db'),
+            'USER': os.environ.get('POSTGRES_USER', 'racing_user'),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'racing_password'),
+            'HOST': os.environ.get('POSTGRES_HOST', 'db'),
+            'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+        }
+    }
 
 
 # Password validation

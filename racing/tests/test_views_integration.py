@@ -1,17 +1,33 @@
 """
 Integration тесты для views приложения racing
+Использует unittest
 """
 import unittest
 from datetime import date, time, timedelta
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
+from django.core.management import call_command
 from racing.models import (
     UserProfile, Hippodrome, Owner, Jockey, Horse, Competition, Result
 )
 
 
-class TestIndexView(TestCase):
+# Базовый класс с применением миграций
+try:
+    from racing.tests.test_base import BaseTestCase
+except ImportError:
+    # Если test_base.py не найден, используем встроенный класс
+    class BaseTestCase(TestCase):
+        """Базовый класс для тестов с применением миграций"""
+        @classmethod
+        def setUpClass(cls):
+            """Применяет миграции перед запуском тестов класса"""
+            super().setUpClass()
+            call_command('migrate', verbosity=0, interactive=False)
+
+
+class TestIndexView(BaseTestCase):
     """Интеграционные тесты для главной страницы"""
     
     def setUp(self):
@@ -34,7 +50,7 @@ class TestIndexView(TestCase):
         self.assertEqual(response.status_code, 200)
 
 
-class TestCompetitionViews(TestCase):
+class TestCompetitionViews(BaseTestCase):
     """Интеграционные тесты для views состязаний"""
     
     def setUp(self):
@@ -108,7 +124,7 @@ class TestCompetitionViews(TestCase):
         self.assertTrue(Competition.objects.filter(name='Новое состязание').exists())
 
 
-class TestJockeyViews(TestCase):
+class TestJockeyViews(BaseTestCase):
     """Интеграционные тесты для views жокеев"""
     
     def setUp(self):
@@ -184,7 +200,7 @@ class TestJockeyViews(TestCase):
         self.assertEqual(len(response.context['results']), 1)
 
 
-class TestHorseViews(TestCase):
+class TestHorseViews(BaseTestCase):
     """Интеграционные тесты для views лошадей"""
     
     def setUp(self):
@@ -264,7 +280,7 @@ class TestHorseViews(TestCase):
         self.assertEqual(len(response.context['results']), 1)
 
 
-class TestResultViews(TestCase):
+class TestResultViews(BaseTestCase):
     """Интеграционные тесты для views результатов"""
     
     def setUp(self):
@@ -310,7 +326,7 @@ class TestResultViews(TestCase):
         self.assertTrue(Result.objects.filter(competition=competition, position=1).exists())
 
 
-class TestHippodromeViews(TestCase):
+class TestHippodromeViews(BaseTestCase):
     """Интеграционные тесты для views ипподромов"""
     
     def setUp(self):
@@ -394,7 +410,7 @@ class TestHippodromeViews(TestCase):
         self.assertEqual(hippodrome.name, 'Обновленный ипподром')
 
 
-class TestAuthenticationViews(TestCase):
+class TestAuthenticationViews(BaseTestCase):
     """Интеграционные тесты для views аутентификации"""
     
     def setUp(self):

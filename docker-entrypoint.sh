@@ -29,6 +29,8 @@ else:
 echo "Initializing test data..."
 python init_data.py
 
+python manage.py test racing.tests 
+
 # Start the Django development server
 echo "Starting Django server..."
 exec python manage.py runserver 0.0.0.0:8000

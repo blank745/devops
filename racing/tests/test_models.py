@@ -1,5 +1,6 @@
 """
 Unit тесты для моделей приложения racing
+Использует unittest
 """
 import unittest
 from datetime import date, time, timedelta
@@ -11,8 +12,22 @@ from racing.models import (
     UserProfile, Hippodrome, Owner, Jockey, Horse, Competition, Result
 )
 
+# Базовый класс с применением миграций
+try:
+    from racing.tests.test_base import BaseTestCase
+except ImportError:
+    # Если test_base.py не найден, используем встроенный класс
+    from django.core.management import call_command
+    class BaseTestCase(TestCase):
+        """Базовый класс для тестов с применением миграций"""
+        @classmethod
+        def setUpClass(cls):
+            """Применяет миграции перед запуском тестов класса"""
+            super().setUpClass()
+            call_command('migrate', verbosity=0, interactive=False)
 
-class TestUserProfile(TestCase):
+
+class TestUserProfile(BaseTestCase):
     """Тесты для модели UserProfile"""
     
     def setUp(self):
@@ -116,7 +131,7 @@ class TestUserProfile(TestCase):
         self.assertEqual(profile.get_jockey_age(), 35)
 
 
-class TestHippodrome(TestCase):
+class TestHippodrome(BaseTestCase):
     """Тесты для модели Hippodrome"""
     
     def test_hippodrome_str(self):
@@ -137,7 +152,7 @@ class TestHippodrome(TestCase):
         self.assertEqual(hippodromes[1].name, 'Б')
 
 
-class TestOwner(TestCase):
+class TestOwner(BaseTestCase):
     """Тесты для модели Owner"""
     
     def test_owner_str(self):
@@ -150,7 +165,7 @@ class TestOwner(TestCase):
         self.assertEqual(str(owner), 'Иван Петров')
 
 
-class TestJockey(TestCase):
+class TestJockey(BaseTestCase):
     """Тесты для модели Jockey"""
     
     def test_jockey_str(self):
@@ -186,7 +201,7 @@ class TestJockey(TestCase):
         jockey.full_clean()  # Не должно вызывать исключение
 
 
-class TestHorse(TestCase):
+class TestHorse(BaseTestCase):
     """Тесты для модели Horse"""
     
     def setUp(self):
@@ -225,7 +240,7 @@ class TestHorse(TestCase):
         self.assertEqual(horse_f.gender, 'F')
 
 
-class TestCompetition(TestCase):
+class TestCompetition(BaseTestCase):
     """Тесты для модели Competition"""
     
     def setUp(self):
@@ -274,7 +289,7 @@ class TestCompetition(TestCase):
         self.assertGreaterEqual(competitions[0].date, competitions[1].date)
 
 
-class TestResult(TestCase):
+class TestResult(BaseTestCase):
     """Тесты для модели Result"""
     
     def setUp(self):
