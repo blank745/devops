@@ -24,7 +24,7 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username} ({self.get_role_display()})"
-    
+    """
     def is_admin(self):
         return self.role == 'admin'
     
@@ -33,25 +33,22 @@ class UserProfile(models.Model):
     
     def is_user(self):
         return self.role == 'user'
-    
+
     def get_jockey_name(self):
-        """Получить имя жокея для пользователя-жокея"""
         if self.is_jockey() and self.jockey:
             return self.jockey.name
         return f"{self.user.first_name} {self.user.last_name}".strip() or self.user.username
     
     def get_jockey_rating(self):
-        """Получить рейтинг жокея"""
         if self.is_jockey() and self.jockey:
             return self.jockey.rating
         return None
     
     def get_jockey_age(self):
-        """Получить возраст жокея"""
         if self.is_jockey() and self.jockey:
             return self.jockey.age
         return None
-
+    """
 
 class Hippodrome(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название ипподрома")
