@@ -24,7 +24,7 @@ class UserProfile(models.Model):
     
     def __str__(self):
         return f"{self.user.username} ({self.get_role_display()})"
-    """
+    
     def is_admin(self):
         return self.role == 'admin'
     
@@ -48,7 +48,7 @@ class UserProfile(models.Model):
         if self.is_jockey() and self.jockey:
             return self.jockey.age
         return None
-    """
+    
 
 class Hippodrome(models.Model):
     name = models.CharField(max_length=200, verbose_name="Название ипподрома")
